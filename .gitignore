@@ -1,0 +1,17 @@
+# node modules
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# environment variables (DO NOT COMMIT SECRETS)
+.env
+backend/.env
+
+# optional: OS junk
+.DS_Store
+
+# logs
+*.log
+
+# build output
+frontend/dist
