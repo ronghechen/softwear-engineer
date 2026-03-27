@@ -6,6 +6,7 @@ backend/node_modules/
 # environment variables (DO NOT COMMIT SECRETS)
 .env
 backend/.env
+frontend/.env
 
 # optional: OS junk
 .DS_Store

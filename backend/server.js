@@ -13,7 +13,14 @@ const s3 = require("./s3");
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://softwear-engineer.vercel.app"
+    ]
+  })
+);
 // Important for base64 image uploads
 app.use(express.json({ limit: "10mb" }));
 
