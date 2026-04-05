@@ -244,23 +244,20 @@ app.get("/outfits", async (req, res) => {
     const limit = Math.max(parseInt(req.query.limit, 10) || 12, 1);
     const offset = (page - 1) * limit;
 
-    const [[countRow]] = await db.execute(`
+    const [[countRow]] = await db.query(`
       SELECT COUNT(*) AS total
       FROM outfits
     `);
 
-    const [rows] = await db.execute(
-      `
+    const [rows] = await db.query(`
       SELECT id, image_url, thumbnail_url, occasion, vibe, season, color, detected_color, notes, created_at
       FROM outfits
       ORDER BY created_at DESC
-      LIMIT ? OFFSET ?
-      `,
-      [limit, offset]
-    );
+      LIMIT ${Number(limit)} OFFSET ${Number(offset)}
+    `);
 
     const total = countRow.total;
-    const totalPages = Math.ceil(total / limit);
+    const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
 
     res.json({
       message: "success",
@@ -283,60 +280,13 @@ app.get("/outfits", async (req, res) => {
 });
 
 // GET filtered outfits
-/*app.get("/outfits/filter", async (req, res) => {
-  try {
-    const { occasion, vibe, season, color } = req.query;
-
-    let sql = `
-      SELECT id, image_url, thumbnail_url, occasion, vibe, season, color, detected_color, notes, created_at
-      FROM outfits
-      WHERE 1=1
-    `;
-    const params = [];
-
-    if (occasion) {
-      sql += " AND occasion = ?";
-      params.push(occasion);
-    }
-
-    if (vibe) {
-      sql += " AND vibe = ?";
-      params.push(vibe);
-    }
-
-    if (season) {
-      sql += " AND season = ?";
-      params.push(season);
-    }
-
-    if (color) {
-      sql += " AND (color = ? OR detected_color = ?)";
-      params.push(color, color);
-    }
-
-    sql += " ORDER BY created_at DESC";
-
-    const [rows] = await db.execute(sql, params);
-
-    res.json({
-      message: "success",
-      outfits: rows
-    });
-  } catch (err) {
-    console.error("GET /outfits/filter error:", err);
-    res.status(500).json({
-      message: err.message,
-      outfits: []
-    });
-  }
-});*/
 
 app.get("/outfits/filter", async (req, res) => {
   try {
     const { occasion, vibe, season, color } = req.query;
 
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
-    const limit = Math.max(parseInt(req.query.limit, 10) || 6, 1);
+    const limit = Math.max(parseInt(req.query.limit, 10) || 12, 1);
     const offset = (page - 1) * limit;
 
     let whereSql = `WHERE 1=1`;
@@ -371,19 +321,19 @@ app.get("/outfits/filter", async (req, res) => {
       whereParams
     );
 
-    const [rows] = await db.execute(
-      `
-      SELECT id, image_url, thumbnail_url, occasion, vibe, season, color, detected_color, notes, created_at
-      FROM outfits
-      ${whereSql}
-      ORDER BY created_at DESC
-      LIMIT ? OFFSET ?
-      `,
-      [...whereParams, limit, offset]
-    );
+    const [rows] = await db.query(
+    `
+    SELECT id, image_url, thumbnail_url, occasion, vibe, season, color, detected_color, notes, created_at
+    FROM outfits
+    ${whereSql}
+    ORDER BY created_at DESC
+    LIMIT ${Number(limit)} OFFSET ${Number(offset)}
+    `,
+    whereParams
+  );
 
     const total = countRow.total;
-    const totalPages = Math.ceil(total / limit);
+    const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
 
     res.json({
       message: "success",
@@ -407,51 +357,6 @@ app.get("/outfits/filter", async (req, res) => {
 
 // GET search outfits by keyword
 
-/*app.get("/outfits/search", async (req, res) => {
-  try {
-    const { q } = req.query;
-
-    if (!q || !q.trim()) {
-      return res.status(400).json({
-        message: "missing search query",
-        outfits: []
-      });
-    }
-
-    const searchTerm = `%${q.trim()}%`;
-
-    const sql = `
-      SELECT id, image_url, thumbnail_url, occasion, vibe, season, color, detected_color, notes, created_at
-      FROM outfits
-      WHERE occasion LIKE ?
-         OR vibe LIKE ?
-         OR season LIKE ?
-         OR color LIKE ?
-         OR notes LIKE ?
-      ORDER BY created_at DESC
-    `;
-
-    const [rows] = await db.execute(sql, [
-      searchTerm,
-      searchTerm,
-      searchTerm,
-      searchTerm,
-      searchTerm
-    ]);
-
-    res.json({
-      message: "success",
-      outfits: rows
-    });
-  } catch (err) {
-    console.error("GET /outfits/search error:", err);
-    res.status(500).json({
-      message: err.message,
-      outfits: []
-    });
-  }
-});*/
-
 app.get("/outfits/search", async (req, res) => {
   try {
     const { q } = req.query;
@@ -465,7 +370,7 @@ app.get("/outfits/search", async (req, res) => {
     }
 
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
-    const limit = Math.max(parseInt(req.query.limit, 10) || 6, 1);
+    const limit = Math.max(parseInt(req.query.limit, 10) || 12, 1);
     const offset = (page - 1) * limit;
 
     const searchTerm = `%${q.trim()}%`;
@@ -495,19 +400,19 @@ app.get("/outfits/search", async (req, res) => {
       params
     );
 
-    const [rows] = await db.execute(
-      `
-      SELECT id, image_url, thumbnail_url, occasion, vibe, season, color, detected_color, notes, created_at
-      FROM outfits
-      ${whereSql}
-      ORDER BY created_at DESC
-      LIMIT ? OFFSET ?
-      `,
-      [...params, limit, offset]
-    );
+    const [rows] = await db.query(
+    `
+    SELECT id, image_url, thumbnail_url, occasion, vibe, season, color, detected_color, notes, created_at
+    FROM outfits
+    ${whereSql}
+    ORDER BY created_at DESC
+    LIMIT ${Number(limit)} OFFSET ${Number(offset)}
+    `,
+    params
+  );
 
     const total = countRow.total;
-    const totalPages = Math.ceil(total / limit);
+    const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
 
     res.json({
       message: "success",
