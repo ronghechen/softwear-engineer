@@ -1,19 +1,32 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 
-export async function getOutfits() {
-  const response = await fetch(`${API_BASE_URL}/outfits`);
-  return response.json();
-}
-
-export async function filterOutfits(filters) {
-  const query = new URLSearchParams(filters).toString();
-  const response = await fetch(`${API_BASE_URL}/outfits/filter?${query}`);
-  return response.json();
-}
-
-export async function searchOutfits(q) {
+export async function getOutfits(page = 1, limit = 12) {
   const response = await fetch(
-    `${API_BASE_URL}/outfits/search?q=${encodeURIComponent(q)}`
+    `${API_BASE_URL}/outfits?page=${page}&limit=${limit}`
+  );
+  return response.json();
+}
+
+export async function filterOutfits(filters, page = 1, limit = 12) {
+  const params = new URLSearchParams();
+
+  if (filters.occasion) params.append("occasion", filters.occasion);
+  if (filters.vibe) params.append("vibe", filters.vibe);
+  if (filters.season) params.append("season", filters.season);
+  if (filters.color) params.append("color", filters.color);
+
+  params.append("page", page);
+  params.append("limit", limit);
+
+  const response = await fetch(
+    `${API_BASE_URL}/outfits/filter?${params.toString()}`
+  );
+  return response.json();
+}
+
+export async function searchOutfits(q, page = 1, limit = 12) {
+  const response = await fetch(
+    `${API_BASE_URL}/outfits/search?q=${encodeURIComponent(q)}&page=${page}&limit=${limit}`
   );
   return response.json();
 }

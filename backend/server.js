@@ -217,7 +217,7 @@ function scoreOutfit(base, candidate) {
 }
 
 // GET all outfits
-app.get("/outfits", async (req, res) => {
+/*app.get("/outfits", async (req, res) => {
   try {
     const [rows] = await db.execute(`
       SELECT id, image_url, thumbnail_url, occasion, vibe, season, color, detected_color, notes, created_at
@@ -236,10 +236,54 @@ app.get("/outfits", async (req, res) => {
       outfits: []
     });
   }
+});*/
+
+app.get("/outfits", async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.max(parseInt(req.query.limit, 10) || 12, 1);
+    const offset = (page - 1) * limit;
+
+    const [[countRow]] = await db.execute(`
+      SELECT COUNT(*) AS total
+      FROM outfits
+    `);
+
+    const [rows] = await db.execute(
+      `
+      SELECT id, image_url, thumbnail_url, occasion, vibe, season, color, detected_color, notes, created_at
+      FROM outfits
+      ORDER BY created_at DESC
+      LIMIT ? OFFSET ?
+      `,
+      [limit, offset]
+    );
+
+    const total = countRow.total;
+    const totalPages = Math.ceil(total / limit);
+
+    res.json({
+      message: "success",
+      outfits: rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages
+      }
+    });
+  } catch (err) {
+    console.error("GET /outfits error:", err);
+    res.status(500).json({
+      message: err.message,
+      outfits: [],
+      pagination: null
+    });
+  }
 });
 
 // GET filtered outfits
-app.get("/outfits/filter", async (req, res) => {
+/*app.get("/outfits/filter", async (req, res) => {
   try {
     const { occasion, vibe, season, color } = req.query;
 
@@ -285,11 +329,85 @@ app.get("/outfits/filter", async (req, res) => {
       outfits: []
     });
   }
+});*/
+
+app.get("/outfits/filter", async (req, res) => {
+  try {
+    const { occasion, vibe, season, color } = req.query;
+
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.max(parseInt(req.query.limit, 10) || 6, 1);
+    const offset = (page - 1) * limit;
+
+    let whereSql = `WHERE 1=1`;
+    const whereParams = [];
+
+    if (occasion) {
+      whereSql += " AND occasion = ?";
+      whereParams.push(occasion);
+    }
+
+    if (vibe) {
+      whereSql += " AND vibe = ?";
+      whereParams.push(vibe);
+    }
+
+    if (season) {
+      whereSql += " AND season = ?";
+      whereParams.push(season);
+    }
+
+    if (color) {
+      whereSql += " AND (color = ? OR detected_color = ?)";
+      whereParams.push(color, color);
+    }
+
+    const [[countRow]] = await db.execute(
+      `
+      SELECT COUNT(*) AS total
+      FROM outfits
+      ${whereSql}
+      `,
+      whereParams
+    );
+
+    const [rows] = await db.execute(
+      `
+      SELECT id, image_url, thumbnail_url, occasion, vibe, season, color, detected_color, notes, created_at
+      FROM outfits
+      ${whereSql}
+      ORDER BY created_at DESC
+      LIMIT ? OFFSET ?
+      `,
+      [...whereParams, limit, offset]
+    );
+
+    const total = countRow.total;
+    const totalPages = Math.ceil(total / limit);
+
+    res.json({
+      message: "success",
+      outfits: rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages
+      }
+    });
+  } catch (err) {
+    console.error("GET /outfits/filter error:", err);
+    res.status(500).json({
+      message: err.message,
+      outfits: [],
+      pagination: null
+    });
+  }
 });
 
 // GET search outfits by keyword
 
-app.get("/outfits/search", async (req, res) => {
+/*app.get("/outfits/search", async (req, res) => {
   try {
     const { q } = req.query;
 
@@ -330,6 +448,83 @@ app.get("/outfits/search", async (req, res) => {
     res.status(500).json({
       message: err.message,
       outfits: []
+    });
+  }
+});*/
+
+app.get("/outfits/search", async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    if (!q || !q.trim()) {
+      return res.status(400).json({
+        message: "missing search query",
+        outfits: [],
+        pagination: null
+      });
+    }
+
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.max(parseInt(req.query.limit, 10) || 6, 1);
+    const offset = (page - 1) * limit;
+
+    const searchTerm = `%${q.trim()}%`;
+
+    const whereSql = `
+      WHERE occasion LIKE ?
+         OR vibe LIKE ?
+         OR season LIKE ?
+         OR color LIKE ?
+         OR notes LIKE ?
+    `;
+
+    const params = [
+      searchTerm,
+      searchTerm,
+      searchTerm,
+      searchTerm,
+      searchTerm
+    ];
+
+    const [[countRow]] = await db.execute(
+      `
+      SELECT COUNT(*) AS total
+      FROM outfits
+      ${whereSql}
+      `,
+      params
+    );
+
+    const [rows] = await db.execute(
+      `
+      SELECT id, image_url, thumbnail_url, occasion, vibe, season, color, detected_color, notes, created_at
+      FROM outfits
+      ${whereSql}
+      ORDER BY created_at DESC
+      LIMIT ? OFFSET ?
+      `,
+      [...params, limit, offset]
+    );
+
+    const total = countRow.total;
+    const totalPages = Math.ceil(total / limit);
+
+    res.json({
+      message: "success",
+      outfits: rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages
+      }
+    });
+  } catch (err) {
+    console.error("GET /outfits/search error:", err);
+    res.status(500).json({
+      message: err.message,
+      outfits: [],
+      pagination: null
     });
   }
 });

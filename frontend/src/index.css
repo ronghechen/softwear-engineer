@@ -703,6 +703,42 @@ button {
   font-size: 1rem;
 }
 
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.pagination-controls button {
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+
+  /* glassy vibe */
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+}
+
+.pagination-controls button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7f5af0, #9f7aea);
+  transform: translateY(-1px);
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.pagination-controls span {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+}
+
 @media (max-width: 700px) {
   .top-nav {
     padding: 1.5rem 1.2rem 0.5rem;
